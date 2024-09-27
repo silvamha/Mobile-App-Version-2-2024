@@ -1,59 +1,57 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js"
-import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js"
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  push,
+ onValue,
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
 const firebaseConfig = {
-    databaseURL:"https://leads-tracker-app-a00a6-default-rtdb.firebaseio.com/"
-}
+  databaseURL: "https://leads-tracker-app-a00a6-default-rtdb.firebaseio.com/",
+};
+
+console.log(firebaseConfig);
 
 const app = initializeApp(firebaseConfig);
-const database = getDatabase(app)
-console.log(database)
+const database = getDatabase(app);
+const referenceInDB = ref(database, "leads");
+console.log(database);
 
+const inputEl = document.getElementById("input-el");
+const inputBtn = document.getElementById("input-btn");
+const ulEl = document.getElementById("ul-el");
+const deleteBtn = document.getElementById("delete-btn");
 
-let myLeads = []
-const inputEl = document.getElementById("input-el")
-const inputBtn = document.getElementById("input-btn")
-const ulEl = document.getElementById("ul-el")
-const deleteBtn = document.getElementById("delete-btn")
-const leadsFromLocalStorage = JSON.parse( localStorage.getItem("myLeads") )
-const tabBtn = document.getElementById("tab-btn")
-
-if (leadsFromLocalStorage) {
-    myLeads = leadsFromLocalStorage
-    render(myLeads)
-}
-
-tabBtn.addEventListener("click", function(){    
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
-        myLeads.push(tabs[0].url)
-        localStorage.setItem("myLeads", JSON.stringify(myLeads) )
-        render(myLeads)
-    })
-})
+// Real-time listener for updates to the database
+onValue(referenceInDB, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const leadsArray = Object.values(data);  // Convert object to array
+      render(leadsArray);
+    } else {
+      ulEl.innerHTML = "<li>No leads available.</li>";  // If there's no data
+    }
+  });
 
 function render(leads) {
-    let listItems = ""
-    for (let i = 0; i < leads.length; i++) {
-        listItems += `
+  let listItems = "";
+  for (let i = 0; i < leads.length; i++) {
+    listItems += `
             <li>
                 <a target='_blank' href='${leads[i]}'>
                     ${leads[i]}
                 </a>
             </li>
-        `
-    }
-    ulEl.innerHTML = listItems
+        `;
+  }
+
+  ulEl.innerHTML = listItems;
 }
 
-deleteBtn.addEventListener("dblclick", function() {
-    localStorage.clear()
-    myLeads = []
-    render(myLeads)
-})
+deleteBtn.addEventListener("dblclick", function () {});
 
-inputBtn.addEventListener("click", function() {
-    myLeads.push(inputEl.value)
-    inputEl.value = ""
-    localStorage.setItem("myLeads", JSON.stringify(myLeads) )
-    render(myLeads)
-})
+inputBtn.addEventListener("click", function () {
+  push(referenceInDB, inputEl.value);
+  console.log(inputEl.value);
+  inputEl.value = "";
+});
