@@ -5,7 +5,8 @@ import {
   getDatabase,
   ref,
   push,
- onValue,
+  onValue,
+  remove,
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -26,14 +27,15 @@ const deleteBtn = document.getElementById("delete-btn");
 
 // Real-time listener for updates to the database
 onValue(referenceInDB, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      const leadsArray = Object.values(data);  // Convert object to array
-      render(leadsArray);
-    } else {
-      ulEl.innerHTML = "<li>No leads available.</li>";  // If there's no data
-    }
-  });
+  const data = snapshot.val();
+  if (data) {
+    const leadsArray = Object.values(data); // Convert object to array
+    render(leadsArray);
+  } else {
+    ulEl.innerHTML = "<li>No leads available.</li>"; // If there's no data
+  }
+  console.log(data);
+});
 
 function render(leads) {
   let listItems = "";
@@ -50,7 +52,10 @@ function render(leads) {
   ulEl.innerHTML = listItems;
 }
 
-deleteBtn.addEventListener("dblclick", function () {});
+deleteBtn.addEventListener("dblclick", function () {
+  remove(referenceInDB);
+  ulEl.innerHTML = "";
+});
 
 inputBtn.addEventListener("click", function () {
   push(referenceInDB, inputEl.value);
